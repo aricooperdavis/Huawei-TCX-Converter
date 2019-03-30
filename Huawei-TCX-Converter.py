@@ -285,16 +285,24 @@ def process_gps(data: dict) -> dict:
 
     print('processing gps: ', end='')
     try:
+        previous_point = None
+        total_distance = 0
+
         # Loop through data line by line
         for n, entry in enumerate(data['gps']):
+            # GPS is lost, ignore entry
+            if float(entry[1]) == 90.0 and float(entry[2]) == -80.0:
+                entry[4] = total_distance
+                continue
+
+            current_point = (float(entry[1]),float(entry[2]))
             # Calculate distances between points based on vincenty distances
-            if n == 0: # first gps-point has no distance
-                #time, lat, long, [alti], [dist], [hr], [cad]
-                entry[4] = 0
-            else:
+            if previous_point:
                 # TODO: Try other point-to-point distance calculations
-                entry[4] = (_vincenty((float(entry[1]),float(entry[2])),
-                    (float(data['gps'][n-1][1]),float(data['gps'][n-1][2])))+data['gps'][n-1][4])
+                total_distance += _vincenty(current_point, previous_point)
+            #time, lat, long, [alti], [dist], [hr], [cad]
+            entry[4] = total_distance
+            previous_point = current_point
 
     except:
         print('FAILED')
