@@ -15,6 +15,9 @@ import sys
 import tarfile
 import tempfile
 
+# lib for time procedure
+import time
+
 import urllib.request as url_req
 import xml.etree.cElementTree as xml_et
 from datetime import datetime as dts
@@ -970,40 +973,68 @@ class HiJson:
             #       0 {dict)
             #         sportType {int}
             #         attribute {str} 'HW_EXT_TRACK_DETAIL@is<HiTrack File Data>&&HW_EXT_TRACK_SIMPLIFY@is<Other Data>
+            #       1 {dict)
+            #         sportType {int}
+            #         attribute {str} 'HW_EXT_TRACK_DETAIL@is<HiTrack File Data>&&HW_EXT_TRACK_SIMPLIFY@is<Other Data>
+            #       2 {dict)
+            #         sportType {int}
+            #         attribute {str} 'HW_EXT_TRACK_DETAIL@is<HiTrack File Data>&&HW_EXT_TRACK_SIMPLIFY@is<Other Data>
+            #       ...
             #     recordDay {int} 'YYYYMMDD'
             for n, activity_dict in enumerate(data):
                 activity_date = dts.strptime(str(activity_dict['recordDay']), "%Y%m%d")
                 if activity_date >= from_date:
-                    logging.info('Found activity in JSON at index %d to parse from %s (YYY-MM-DD)',
+
+                    #   add sub/level for multisport day...
+                    for y in range(len(activity_dict["motionPathData"])):
+
+                        # get date/time for filename
+                        # get timezone
+                        time_zone=int(activity_dict["motionPathData"][y]["timeZone"])
+                        # get time offset in sec.
+                        time_offset=(time_zone/100)*60*60
+                        # get date_time in local time
+                        datetime_local=time.strftime("%Y%m%d_%H%M%S", time.gmtime((activity_dict["motionPathData"][y]["startTime"]/1000)+time_offset))
+
+
+
+                        logging.info('Found activity in JSON at index %d to parse from %s (YYY-MM-DD)',
                                  n, activity_date.isoformat())
-                    # Create a HiTrack file from the HiTrack data
-                    motion_path_data = activity_dict['motionPathData'][0]
-                    hitrack_data = motion_path_data['attribute']
-                    # Strip prefix and suffix from raw HiTrack data
-                    hitrack_data = re.sub('HW_EXT_TRACK_DETAIL\@is', '', hitrack_data)
-                    hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*?)', '', hitrack_data)
+                        # Create a HiTrack file from the HiTrack data
+                        motion_path_data = activity_dict['motionPathData'][y]
+                        hitrack_data = motion_path_data['attribute']
+                        # Strip prefix and suffix from raw HiTrack data
+                        hitrack_data = re.sub('HW_EXT_TRACK_DETAIL\@is', '', hitrack_data)
+                        hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*?)', '', hitrack_data)
 
-                    # Save HiTrack data to HiTrack file
-                    hitrack_filename = "%s/HiTrack_%s_%d" % (self.output_dir, dts.strftime(activity_date, '%Y%m%d'), n)
-                    logging.info('Saving activity at index %d from %s to HiTrack file %s for parsing',
-                                 n, activity_date, hitrack_filename)
-                    try:
-                        hitrack_file = open(hitrack_filename, "w+")
-                        hitrack_file.write(hitrack_data)
-                    except Exception as e:
-                        logging.error('Error saving activity at index %d from %s to HiTrack file for parsing.\n%s',
-                                      n, activity_date, e)
-                    finally:
+                        # Save HiTrack data to HiTrack file
+                        # I dont understand this line :-(
+                        #hitrack_filename = "%s/HiTrack_%s_%d" % (self.output_dir, dts.strftime(activity_date, '%Y%m%d'), n)
+
+                        # try...
+                        hitrack_filename = "%s/HiTrack_%s_%d" % (self.output_dir, datetime_local, n)
+
+
+
+                        logging.info('Saving activity at index %d from %s to HiTrack file %s for parsing',
+                                     n, activity_date, hitrack_filename)
                         try:
-                            if hitrack_file:
-                                hitrack_file.close()
+                            hitrack_file = open(hitrack_filename, "w+")
+                            hitrack_file.write(hitrack_data)
                         except Exception as e:
-                            logging.error('Error closing HiTrack file <%s>\n', hitrack_filename, e)
+                            logging.error('Error saving activity at index %d from %s to HiTrack file for parsing.\n%s',
+                                      n, activity_date, e)
+                        finally:
+                            try:
+                                if hitrack_file:
+                                    hitrack_file.close()
+                            except Exception as e:
+                                logging.error('Error closing HiTrack file <%s>\n', hitrack_filename, e)
 
-                    # Parse the HiTrack file
-                    hitrack_file = HiTrackFile(hitrack_filename)
-                    hi_activity = hitrack_file.parse()
-                    self.hi_activity_list.append(hi_activity)
+                        # Parse the HiTrack file
+                        hitrack_file = HiTrackFile(hitrack_filename)
+                        hi_activity = hitrack_file.parse()
+                        self.hi_activity_list.append(hi_activity)
                 else:
                     logging.info('Skipped parsing activity at index %d being an activity from %s before %s (YYYYMMDD).',
                         n, activity_date.isoformat(), from_date.isoformat())
