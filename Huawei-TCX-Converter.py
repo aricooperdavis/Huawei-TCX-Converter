@@ -1005,7 +1005,9 @@ class HiJson:
                         hitrack_data = motion_path_data['attribute']
                         # Strip prefix and suffix from raw HiTrack data
                         hitrack_data = re.sub('HW_EXT_TRACK_DETAIL\@is', '', hitrack_data)
-                        hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*?)', '', hitrack_data)
+                        # little error
+                        # hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*?)', '', hitrack_data)
+                        hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*)', '', hitrack_data)
 
                         # Save HiTrack data to HiTrack file
                         # I dont understand this line :-(
