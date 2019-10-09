@@ -1005,8 +1005,6 @@ class HiJson:
                         hitrack_data = motion_path_data['attribute']
                         # Strip prefix and suffix from raw HiTrack data
                         hitrack_data = re.sub('HW_EXT_TRACK_DETAIL\@is', '', hitrack_data)
-                        # little error
-                        # hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*?)', '', hitrack_data)
                         hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*)', '', hitrack_data)
 
                         # Save HiTrack data to HiTrack file
@@ -1430,10 +1428,12 @@ def _init_argument_parser() -> argparse.ArgumentParser:
         except ValueError:
             msg = "Invalid date or date format (expected YYYY-MM-DD): '{0}'.".format(arg)
             raise argparse.ArgumentTypeError(msg)
+#   add default date 1970-01-01
+#   error in parse json without --from_date
     date_group.add_argument('--from_date', help='Applicable to --json and --tar options only. Only convert HiTrack \
                                                  information from the JSON file or from HiTrack files in the tarball \
                                                  if the activity started on FROM_DATE or later. Format YYYY-MM-DD',
-                            type=from_date_type)
+                            type=from_date_type, default='1970-01-01')
 
     swim_group = parser.add_argument_group('SWIM options')
     def pool_length_type(arg):
@@ -1472,6 +1472,7 @@ def _init_argument_parser() -> argparse.ArgumentParser:
 def main():
     parser = _init_argument_parser()
     args = parser.parse_args()
+
     if args.log_level:
         _init_logging(args.log_level)
     else:
@@ -1495,10 +1496,10 @@ def main():
         logging.info('Converted %s', hi_activity)
     elif args.tar:
         hi_tarball = HiTarBall(args.tar)
-        if args.from_date:
-            hi_activity_list = hi_tarball.parse(args.from_date)
-        else:
-            hi_activity_list = hi_tarball.parse()
+#        if args.from_date:
+        hi_activity_list = hi_tarball.parse(args.from_date)
+#        else:
+#            hi_activity_list = hi_tarball.parse()
         for hi_activity in hi_activity_list:
             if args.pool_length:
                 hi_activity.set_pool_length(args.pool_length)
@@ -1507,10 +1508,10 @@ def main():
             logging.info('Converted %s', hi_activity)
     elif args.json:
         hi_json = HiJson(args.json, args.output_dir)
-        if args.from_date:
-            hi_activity_list = hi_json.parse(args.from_date)
-        else:
-            hi_activity_list = hi_json.parse()
+#        if args.from_date:
+        hi_activity_list = hi_json.parse(args.from_date)
+#        else:
+#            hi_activity_list = hi_json.parse()
         for hi_activity in hi_activity_list:
             if args.pool_length:
                 hi_activity.set_pool_length(args.pool_length)
