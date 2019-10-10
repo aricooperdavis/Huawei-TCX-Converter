@@ -84,6 +84,10 @@ class HiActivity:
         # Private variable to temporarily hold the last parsed SWOLF data during parsing of swimming activities
         self.last_swolf_data = None
 
+        # Data from JSON
+        self.JSON_timeZone = 'Z'
+
+
     def get_activity_type(self) -> str:
         if self._activity_type == self.TYPE_UNKNOWN:
             # Perform activity type detection only once.
@@ -1034,6 +1038,9 @@ class HiJson:
                         # Parse the HiTrack file
                         hitrack_file = HiTrackFile(hitrack_filename)
                         hi_activity = hitrack_file.parse()
+                        time_zone = activity_dict["motionPathData"][y]["timeZone"]
+                        time_zone = time_zone[:3] + ':' + time_zone[3:]
+                        hi_activity.JSON_timeZone = time_zone
                         self.hi_activity_list.append(hi_activity)
                 else:
                     logging.info('Skipped parsing activity at index %d being an activity from %s before %s (YYYYMMDD).',
@@ -1118,7 +1125,8 @@ class TcxActivity:
             # Strange enough, according to TCX XSD the Id should be a date.
             # TODO verify if this is the case for Strava too or if something more meaningful can be passed.
             el_id = xml_et.SubElement(el_activity, 'Id')
-            el_id.text = self.hi_activity.start.isoformat('T', 'seconds') + '.000Z'
+#            el_id.text = self.hi_activity.start.isoformat('T', 'seconds') + '.000Z'
+            el_id.text = self.hi_activity.start.isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
             # Generate the activity xml content based on the type of activity
             if self.hi_activity.get_activity_type() in [HiActivity.TYPE_WALK,
@@ -1181,7 +1189,7 @@ class TcxActivity:
         # **** Lap (a lap in the TCX XML corresponds to a segment in the HiActivity)
         for n, segment in enumerate(self.hi_activity.get_segments()):
             el_lap = xml_et.SubElement(el_activity, 'Lap')
-            el_lap.set('StartTime', segment['start'].isoformat('T', 'seconds') + '.000Z')
+            el_lap.set('StartTime', segment['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
             el_total_time_seconds = xml_et.SubElement(el_lap, 'TotalTimeSeconds')
             el_total_time_seconds.text = str(segment['duration'])
             el_distance_meters = xml_et.SubElement(el_lap, 'DistanceMeters')
@@ -1199,7 +1207,7 @@ class TcxActivity:
             for data in segment_data:
                 el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
                 el_time = xml_et.SubElement(el_trackpoint, 'Time')
-                el_time.text = data['t'].isoformat('T', 'seconds') + '.000Z'
+                el_time.text = data['t'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
                 if 'lat' in data:
                     el_position = xml_et.SubElement(el_trackpoint, 'Position')
@@ -1239,7 +1247,7 @@ class TcxActivity:
         cumulative_distance = 0
         for n, lap in enumerate(self.hi_activity.get_swim_data()):
             el_lap = xml_et.SubElement(el_activity, 'Lap')
-            el_lap.set('StartTime', lap['start'].isoformat('T', 'seconds') + '.000Z')
+            el_lap.set('StartTime', lap['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
             el_total_time_seconds = xml_et.SubElement(el_lap, 'TotalTimeSeconds')
             el_total_time_seconds.text = str(lap['duration'])
             el_distance_meters = xml_et.SubElement(el_lap, 'DistanceMeters')
@@ -1255,7 +1263,7 @@ class TcxActivity:
             # Add first TrackPoint for start of lap
             el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
             el_time = xml_et.SubElement(el_trackpoint, 'Time')
-            el_time.text = lap['start'].isoformat('T', 'seconds') + '.000Z'
+            el_time.text = lap['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
             el_distance_meters = xml_et.SubElement(el_trackpoint, 'DistanceMeters')
             el_distance_meters.text = str(cumulative_distance)
 
@@ -1264,7 +1272,7 @@ class TcxActivity:
                 if 'lat' in lap_detail_data:
                     el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
                     el_time = xml_et.SubElement(el_trackpoint, 'Time')
-                    el_time.text = lap_detail_data['t'].isoformat('T', 'seconds') + '.000Z'
+                    el_time.text = lap_detail_data['t'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
                     el_position = xml_et.SubElement(el_trackpoint, 'Position')
                     el_latitude_degrees = xml_et.SubElement(el_position, 'LatitudeDegrees')
@@ -1277,7 +1285,7 @@ class TcxActivity:
 
             el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
             el_time = xml_et.SubElement(el_trackpoint, 'Time')
-            el_time.text = lap['stop'].isoformat('T', 'seconds') + '.000Z'
+            el_time.text = lap['stop'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
             el_distance_meters = xml_et.SubElement(el_trackpoint, 'DistanceMeters')
             el_distance_meters.text = str(cumulative_distance)
         return
