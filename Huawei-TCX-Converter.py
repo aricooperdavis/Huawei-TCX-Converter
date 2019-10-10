@@ -39,6 +39,7 @@ PROGRAM_MAJOR_VERSION = '3'
 PROGRAM_MINOR_VERSION = '0'
 PROGRAM_MAJOR_BUILD = '1910'
 PROGRAM_MINOR_BUILD = '0301'
+PROGRAM_DAN67_BUILD = '20191010'
 
 OUTPUT_DIR = './output'
 GPS_TIMEOUT = dts_delta(seconds=10)
@@ -86,6 +87,7 @@ class HiActivity:
 
         # Data from JSON
         self.JSON_timeZone = 'Z'
+        self.JSON_swim_pool_length = -1
 
 
     def get_activity_type(self) -> str:
@@ -984,6 +986,8 @@ class HiJson:
             #         sportType {int}
             #         attribute {str} 'HW_EXT_TRACK_DETAIL@is<HiTrack File Data>&&HW_EXT_TRACK_SIMPLIFY@is<Other Data>
             #       ...
+            #     sportType {int}
+            #     timeZone {string} '+0200'
             #     recordDay {int} 'YYYYMMDD'
             for n, activity_dict in enumerate(data):
                 activity_date = dts.strptime(str(activity_dict['recordDay']), "%Y%m%d")
@@ -1007,6 +1011,12 @@ class HiJson:
                         # Create a HiTrack file from the HiTrack data
                         motion_path_data = activity_dict['motionPathData'][y]
                         hitrack_data = motion_path_data['attribute']
+
+                        # get adition data
+                        hitrack_data_add = hitrack_data
+                        hitrack_data_add = re.sub('HW_EXT_TRACK_DETAIL\@is(.*)\&\&HW_EXT_TRACK_SIMPLIFY\@is', '', hitrack_data_add, flags = re.DOTALL)
+                        activity_dict_add = json.loads(hitrack_data_add)
+
                         # Strip prefix and suffix from raw HiTrack data
                         hitrack_data = re.sub('HW_EXT_TRACK_DETAIL\@is', '', hitrack_data)
                         hitrack_data = re.sub('\&\&HW_EXT_TRACK_SIMPLIFY\@is(.*)', '', hitrack_data)
@@ -1038,9 +1048,16 @@ class HiJson:
                         # Parse the HiTrack file
                         hitrack_file = HiTrackFile(hitrack_filename)
                         hi_activity = hitrack_file.parse()
+
+                        # Set timezone
                         time_zone = activity_dict["motionPathData"][y]["timeZone"]
                         time_zone = time_zone[:3] + ':' + time_zone[3:]
                         hi_activity.JSON_timeZone = time_zone
+
+                        # Set poopl length
+                        if 'swim_pool_length' in activity_dict_add['wearSportData']:
+                            hi_activity.JSON_swim_pool_length = activity_dict_add['wearSportData']['swim_pool_length'] / 100
+
                         self.hi_activity_list.append(hi_activity)
                 else:
                     logging.info('Skipped parsing activity at index %d being an activity from %s before %s (YYYYMMDD).',
@@ -1521,8 +1538,11 @@ def main():
 #        else:
 #            hi_activity_list = hi_json.parse()
         for hi_activity in hi_activity_list:
-            if args.pool_length:
-                hi_activity.set_pool_length(args.pool_length)
+            #  get pool length from json
+            if hi_activity.JSON_swim_pool_length > 0 :
+                hi_activity.set_pool_length(hi_activity.JSON_swim_pool_length)
+#            if args.pool_length:
+#                hi_activity.set_pool_length(args.pool_length)
             tcx_activity = TcxActivity(hi_activity, tcx_xml_schema, args.output_dir, args.output_file_prefix)
             tcx_activity.save()
             logging.info('Converted %s', hi_activity)
