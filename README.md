@@ -5,19 +5,35 @@ A makeshift python tool that generates TCX files from Huawei HiTrack files.
 
 Users of Huawei Watches/Bands sync their fitness data with the Huawei Health App. It is [notoriously difficult](https://uk.community.huawei.com/software-17/huawei-health-integration-with-other-services-1198/index3.html) to get the data out of this app, but [through some cunning](https://forum.xda-developers.com/smartwatch/huawei-watch/huawei-watch-gt-export-data-health-t3874330) you can find `HiTrack` files which seem to contain some run data. This program allows you to take these files and generate `.TCX` files for use in your tracking app of choice (e.g. Strava). The outputted `.TCX` files will contain timestamped GPS, altitude, heart-rate, and cadence data where available.
 
-## How to get the HiTrack Files
+**N.B. Huawei have caught onto us, and you now need a rooted phone to be able to use this method. Instead, this program can also process json data produced on request from Huawei. See ["How to get motion data JSON"](https://github.com/aricooperdavis/Huawei-TCX-Converter#how-to-get-motion-data-json) for more info.**
 
-**This section needs to be updated. Please use the info in the release notes from version 3.0 build 1910.0301** 
+## How to get the HiTrack Files
 
 - Open the Huawei Health app and open the exercise that you want to convert to view it's trajectory. This ensures that its HiTrack file is generated.
 
 If you have a **rooted** phone you can simply navigate to: `data/data/com.huawei.health/files/` where you should find a number of files prefixed `HiTrack`.
 
 If you have an **unrooted** phone then:
+**N.B. You may need an old version of the Huawei Health app to use this method.**
 - Download the [Huawei Backup App](https://play.google.com/store/apps/details?id=com.huawei.KoBackup&hl=en_GB) onto your phone.
 - Start a new **unencrypted** backup of the Huawei Health app data to your external storage (SD Card)
 - Navigate to `Huawei/Backup/***/backupFiles/***/` and copy `com.huawei.health.tar` to your computer.
 - Unzip the file and navigate to `com.huawei.health/files/` and you should should see a number of `HiTrack` files.
+
+## How to get motion data JSON
+This program can also process the data provided by Huawei when you request a copy of your personal data. Request this as follows:
+- Enabled your Huawei account in the app.
+- Tap the "Me" button in the lower right-hand corner, then tap on your account name on top of 
+the screen. 
+- Tap on 'Privacy Center'
+- Tap 'Request Your Data'
+
+You will receive an email with a link to download a zip file containing all of your Huawei data. Once downloaded:
+
+- Open the zip file and go to the "data/Motion path detail data & description" folder.
+- Extract the file "motion path detail data.json" from the zip file.
+
+Use this file in the --json command line option.  
 
 ## How to use the Huawei TCX Converter
 You need [`python 3`](https://www.python.org/downloads/) to use this tool.
