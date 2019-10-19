@@ -39,7 +39,7 @@ PROGRAM_MAJOR_VERSION = '3'
 PROGRAM_MINOR_VERSION = '0'
 PROGRAM_MAJOR_BUILD = '1910'
 PROGRAM_MINOR_BUILD = '0301'
-PROGRAM_DAN67_BUILD = '20191010'
+PROGRAM_DAN67_BUILD = '20191019'
 
 OUTPUT_DIR = './output'
 GPS_TIMEOUT = dts_delta(seconds=10)
@@ -86,6 +86,7 @@ class HiActivity:
         self.last_swolf_data = None
 
         # Data from JSON
+        self.JSON_timeOffset = 0
         self.JSON_timeZone = 'Z'
         self.JSON_swim_pool_length = -1
 
@@ -960,7 +961,7 @@ class HiJson:
 
         self.hi_activity_list = []
 
-    def parse(self, from_date: dts = None) -> list:
+    def parse(self, from_date: dts = None, usetimezone : bool = False) -> list:
         try:
             # Look for HiTrack information in JSON file
 
@@ -1052,11 +1053,14 @@ class HiJson:
                         # Set timezone
                         time_zone = activity_dict["motionPathData"][y]["timeZone"]
                         time_zone = time_zone[:3] + ':' + time_zone[3:]
-                        hi_activity.JSON_timeZone = time_zone
+                        if usetimezone :
+                            hi_activity.JSON_timeZone = time_zone
+                            hi_activity.JSON_timeOffset = int(time_offset)
 
-                        # Set poopl length
+                        # Set pool length
                         if 'swim_pool_length' in activity_dict_add['wearSportData']:
                             hi_activity.JSON_swim_pool_length = activity_dict_add['wearSportData']['swim_pool_length'] / 100
+
 
                         self.hi_activity_list.append(hi_activity)
                 else:
@@ -1143,7 +1147,7 @@ class TcxActivity:
             # TODO verify if this is the case for Strava too or if something more meaningful can be passed.
             el_id = xml_et.SubElement(el_activity, 'Id')
 #            el_id.text = self.hi_activity.start.isoformat('T', 'seconds') + '.000Z'
-            el_id.text = self.hi_activity.start.isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
+            el_id.text = (self.hi_activity.start+datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
             # Generate the activity xml content based on the type of activity
             if self.hi_activity.get_activity_type() in [HiActivity.TYPE_WALK,
@@ -1206,7 +1210,8 @@ class TcxActivity:
         # **** Lap (a lap in the TCX XML corresponds to a segment in the HiActivity)
         for n, segment in enumerate(self.hi_activity.get_segments()):
             el_lap = xml_et.SubElement(el_activity, 'Lap')
-            el_lap.set('StartTime', segment['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
+            #el_lap.set('StartTime', segment['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
+            el_lap.set('StartTime', (segment['start']+datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
             el_total_time_seconds = xml_et.SubElement(el_lap, 'TotalTimeSeconds')
             el_total_time_seconds.text = str(segment['duration'])
             el_distance_meters = xml_et.SubElement(el_lap, 'DistanceMeters')
@@ -1224,7 +1229,7 @@ class TcxActivity:
             for data in segment_data:
                 el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
                 el_time = xml_et.SubElement(el_trackpoint, 'Time')
-                el_time.text = data['t'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
+                el_time.text = (data['t']+datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
                 if 'lat' in data:
                     el_position = xml_et.SubElement(el_trackpoint, 'Position')
@@ -1264,7 +1269,7 @@ class TcxActivity:
         cumulative_distance = 0
         for n, lap in enumerate(self.hi_activity.get_swim_data()):
             el_lap = xml_et.SubElement(el_activity, 'Lap')
-            el_lap.set('StartTime', lap['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
+            el_lap.set('StartTime', (lap['start'] + datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone)
             el_total_time_seconds = xml_et.SubElement(el_lap, 'TotalTimeSeconds')
             el_total_time_seconds.text = str(lap['duration'])
             el_distance_meters = xml_et.SubElement(el_lap, 'DistanceMeters')
@@ -1280,7 +1285,7 @@ class TcxActivity:
             # Add first TrackPoint for start of lap
             el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
             el_time = xml_et.SubElement(el_trackpoint, 'Time')
-            el_time.text = lap['start'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
+            el_time.text = (lap['start'] + datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
             el_distance_meters = xml_et.SubElement(el_trackpoint, 'DistanceMeters')
             el_distance_meters.text = str(cumulative_distance)
 
@@ -1289,7 +1294,7 @@ class TcxActivity:
                 if 'lat' in lap_detail_data:
                     el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
                     el_time = xml_et.SubElement(el_trackpoint, 'Time')
-                    el_time.text = lap_detail_data['t'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
+                    el_time.text = (lap_detail_data['t'] + datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
 
                     el_position = xml_et.SubElement(el_trackpoint, 'Position')
                     el_latitude_degrees = xml_et.SubElement(el_position, 'LatitudeDegrees')
@@ -1302,7 +1307,7 @@ class TcxActivity:
 
             el_trackpoint = xml_et.SubElement(el_track, 'Trackpoint')
             el_time = xml_et.SubElement(el_trackpoint, 'Time')
-            el_time.text = lap['stop'].isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
+            el_time.text = (lap['stop'] + datetime.timedelta(seconds=self.hi_activity.JSON_timeOffset)).isoformat('T', 'seconds') + '.000' + self.hi_activity.JSON_timeZone
             el_distance_meters = xml_et.SubElement(el_trackpoint, 'DistanceMeters')
             el_distance_meters.text = str(cumulative_distance)
         return
@@ -1441,6 +1446,8 @@ def _init_argument_parser() -> argparse.ArgumentParser:
     json_group = parser.add_argument_group('JSON options')
     json_group.add_argument('-j', '--json', help='The filename of a Huawei Cloud JSON file containing the motion path \
                                                   detail data.')
+    json_group.add_argument('-tz', '--timezone', help='Use time zone from JSON file.', action='store_true')
+
 
     tar_group = parser.add_argument_group('TAR options')
     tar_group.add_argument('-t', '--tar', help='The filename of an (unencrypted) tarball with HiTrack files to \
@@ -1534,7 +1541,7 @@ def main():
     elif args.json:
         hi_json = HiJson(args.json, args.output_dir)
 #        if args.from_date:
-        hi_activity_list = hi_json.parse(args.from_date)
+        hi_activity_list = hi_json.parse(args.from_date,args.timezone)
 #        else:
 #            hi_activity_list = hi_json.parse()
         for hi_activity in hi_activity_list:
