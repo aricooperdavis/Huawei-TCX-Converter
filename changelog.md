@@ -1,4 +1,22 @@
-# Release notes
+# Changelog
+## Release Notes
+### Version 3.0 Build 1910.0301
+#### New features and changes
+<li>It is now possible to (mass) convert activity data from the JSON file with the motion path detail data available in
+the Privacy Data zip file that you can request in the Huawei Health app. Use the new --json command line option and
+specify your extracted "motion path detail data.json" file.
+To be able to request your data in the Huawei Health app, a prerequisite is to have an enabled Huawei account in the app.
+To request your data, tap the "Me" button in the lower right-hand corner, then tap on your account name on top of 
+the screen. Next, tap on 'Privacy Center' (one but last option just above 'Settings'). You can now request ALL your
+Huawei Health app data in a zip file by tapping 'Request Your Data'. You will receive a mail with a link to download
+the zip file. Once downloaded, open the zip file and go to the "data/Motion path detail data & description" folder.
+Extract the file "motion path detail data.json" from the zip file. Use this file in the --json command line option.  
+This will generate both the original HiTrack files and the converted TCX files. Closes #37.</li>
+
+#### Known Limitations
+<li>The JSON file from the Huawei Privacy export contains other interesting data and information which is currently not
+used (yet).</li>
+
 ### Version 2.3 Build 1909.2401
 #### Solved issues
 <li>Program would error out when trying to convert without the --validate_xml option when the xmlschema library wasn't 
