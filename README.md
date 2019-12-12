@@ -103,7 +103,7 @@ Download the [Huawei TCX Converter](https://raw.githubusercontent.com/aricooperd
 ### Usage Examples
 
 #### JSON file conversion example
-USe the command below to convert all activities available in the motion path JSON file from the requested Huawei Privacy data that were started
+Use the command below to convert all activities available in the motion path JSON file from the requested Huawei Privacy data that were started
 on October, 3rd, 2019 or later. Source HiTrack files and converted TCX files will be generated in folder /my_output_dir/json 
 
 >python Huawei-TCX-Converter --json "motion path detail data.json" --from_date 2019-10-03 --output_dir /my_output_dir/json
@@ -149,24 +149,6 @@ I have copied the `Huawei-TCX-Converter.py` file to the directory containing my 
     python Huawei-TCX-Converter.py --file HiTrack_1551732120000155173259000030001
 
 I've included both the HiTrack file and the resultant TCX file in the Examples folder for you to have a go with. You can also [visualise the data online](https://www.mygpsfiles.com/app/#3gcQ1H3M).
-
-## Release Notes
-### Version 3.0 Build 1910.0301
-#### New features and changes
-<li>It is now possible to (mass) convert activity data from the JSON file with the motion path detail data available in
-the Privacy Data zip file that you can request in the Huawei Health app. Use the new --json command line option and
-specify your extracted "motion path detail data.json" file.
-To be able to request your data in the Huawei Health app, a prerequisite is to have an enabled Huawei account in the app.
-To request your data, tap the "Me" button in the lower right-hand corner, then tap on your account name on top of 
-the screen. Next, tap on 'Privacy Center' (one but last option just above 'Settings'). You can now request ALL your
-Huawei Health app data in a zip file by tapping 'Request Your Data'. You will receive a mail with a link to download
-the zip file. Once downloaded, open the zip file and go to the "data/Motion path detail data & description" folder.
-Extract the file "motion path detail data.json" from the zip file. Use this file in the --json command line option.  
-This will generate both the original HiTrack files and the converted TCX files. Closes #37.</li>
-
-#### Known Limitations
-<li>The JSON file from the Huawei Privacy export contains other interesting data and information which is currently not
-used (yet).</li>
 
 ## Comparison
 This is an image of the GPS trace from the .tcx file. The command line output above also lists the start time as 2019-03-04 20:42:00, the distance as 1.70km, and the duration as 00:07:49.
