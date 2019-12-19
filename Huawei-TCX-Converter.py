@@ -37,8 +37,8 @@ except:
 PROGRAM_NAME = 'Huawei-TCX-Converter'
 PROGRAM_MAJOR_VERSION = '3'
 PROGRAM_MINOR_VERSION = '0'
-PROGRAM_MAJOR_BUILD = '1910'
-PROGRAM_MINOR_BUILD = '0301'
+PROGRAM_MAJOR_BUILD = '1912'
+PROGRAM_MINOR_BUILD = '1901'
 PROGRAM_DAN67_BUILD = '20191019'
 
 OUTPUT_DIR = './output'
@@ -187,8 +187,9 @@ class HiActivity:
 
             self.activity_params['gps'] = True
 
-        # Add location data
-        self._add_data_detail(location_data)
+        # Only add location data with a valid timestamp (ignore GPS loss or pause records at start of the location data)
+        if location_data['t']:
+            self._add_data_detail(location_data)
 
     def _get_last_location(self) -> Optional[dict]:
         """ Returns the last location record in the data dictionary """
@@ -516,7 +517,7 @@ class HiActivity:
             for n, step_freq in enumerate(self.activity_params['step frequency data']):
                 step_freq_sum += step_freq
 
-            step_freq_avg = step_freq_sum / n
+            step_freq_avg = step_freq_sum / (n + 1)
             logging.debug('Activity %s has a calculated average step frequency of %d', self.activity_id, step_freq_avg)
 
             if self.activity_params['step frequency min'] == 0 and self.activity_params['step frequency max'] == 0:
@@ -1473,7 +1474,7 @@ def _init_argument_parser() -> argparse.ArgumentParser:
         if l < 1:
             raise argparse.ArgumentTypeError("Pool length must be an positive integer value.")
         if l == 1013:
-            print('Congrats on your sim in the Alfonso del Mar.')
+            print('Congrats on your swim in the Alfonso del Mar.')
         return l
 
     swim_group.add_argument('--pool_length', help='The pool length in meters to use for swimming activities. \
