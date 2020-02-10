@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Huawei-TCX-Converter.py
 # Copyright (c) 2019 Ari Cooper-Davis / Christoph Vanthuyne - github.com/aricooperdavis/Huawei-TCX-Converter
 
