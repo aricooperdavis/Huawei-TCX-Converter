@@ -40,6 +40,8 @@ You need [`python 3`](https://www.python.org/downloads/) to use this tool.
 
 Download the [Huawei TCX Converter](https://raw.githubusercontent.com/aricooperdavis/Huawei-TCX-Converter/master/Huawei-TCX-Converter.py) and save it as a Python script in the same folder as your HiTrack file.
 
+*Need something simpler? There is [an implementation  of this code online](http://www.hitrackconverter.com/) where you can simply upload your files. Note that this is a closed-source project from an unaffiliated creator.*
+
 ### Command Line Arguments Overview
 >usage: Huawei-TCX-Converter.py [-h] [-f FILE]
 >                     [-s {Walk,Run,Cycle,Swim_Pool,Swim_Open_Water}] [-j JSON]
