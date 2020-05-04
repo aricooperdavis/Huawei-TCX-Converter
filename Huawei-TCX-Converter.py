@@ -1316,7 +1316,11 @@ class TcxActivity:
     def save(self, tcx_filename: str = None):
         if not self.training_center_database:
             # Call generation of TCX XML date if not already done
-            self.generate_xml()
+            try:
+                self.generate_xml()
+            except Exception as e:
+                logging.info('Error generating XML for HiTrack activity <%s>\n%s', self.hi_activity.activity_id, e)
+                return
 
         # Format and save the TCX XML file
         if not tcx_filename:
